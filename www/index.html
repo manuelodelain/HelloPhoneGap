@@ -9,199 +9,70 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1"> 
         <script src="js/lib/http_threejs.org_build_three.min.js"></script>
+        <script src="js/controls/DeviceOrientationControls.js"></script>
     </head>
     <body>
     <div id="container"></div>
     <script>
+(function() {
+                  "use strict";
 
-            var camera, scene, renderer;
+                  window.addEventListener('load', function() {
 
-            var isUserInteracting = false,
-            onMouseDownMouseX = 0, onMouseDownMouseY = 0,
-            lon = 0, onMouseDownLon = 0,
-            lat = 0, onMouseDownLat = 0,
-            phi = 0, theta = 0;
+                        var container, camera, scene, renderer, controls, geometry, mesh;
 
-            init();
-            animate();
+                        var animate = function(){
 
-            function init() {
+                            window.requestAnimationFrame( animate );
 
-                var container, mesh;
+                            controls.update();
+                            renderer.render(scene, camera);
 
-                container = document.getElementById( 'container' );
+                        };
 
-                camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1100 );
-                camera.target = new THREE.Vector3( 0, 0, 0 );
+                        container = document.getElementById( 'container' );
 
-                scene = new THREE.Scene();
+                        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1100);
 
-                var geometry = new THREE.SphereGeometry( 500, 60, 40 );
-                geometry.scale( - 1, 1, 1 );
+                        controls = new THREE.DeviceOrientationControls( camera );
 
-                var material = new THREE.MeshBasicMaterial( {
-                    map: THREE.ImageUtils.loadTexture( 'textures/2294472375_24a3b8ef46_o.jpg' )
-                } );
+                        scene = new THREE.Scene();
 
-                mesh = new THREE.Mesh( geometry, material );
-                
-                scene.add( mesh );
+                        var geometry = new THREE.SphereGeometry( 500, 16, 8 );
+                        geometry.scale( - 1, 1, 1 );
 
-                renderer = new THREE.WebGLRenderer();
-                renderer.setPixelRatio( window.devicePixelRatio );
-                renderer.setSize( window.innerWidth, window.innerHeight );
-                container.appendChild( renderer.domElement );
+                        var material = new THREE.MeshBasicMaterial( {
+                            map: THREE.ImageUtils.loadTexture( 'textures/2294472375_24a3b8ef46_o.jpg' )
+                        } );
 
-                document.addEventListener( 'mousedown', onDocumentMouseDown, false );
-                document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-                document.addEventListener( 'mouseup', onDocumentMouseUp, false );
-                document.addEventListener( 'mousewheel', onDocumentMouseWheel, false );
-                document.addEventListener( 'DOMMouseScroll', onDocumentMouseWheel, false);
+                        var mesh = new THREE.Mesh( geometry, material );
+                        scene.add( mesh );
 
-                //
+                        var geometry = new THREE.BoxGeometry( 100, 100, 100, 4, 4, 4 );
+                        var material = new THREE.MeshBasicMaterial( { color: 0xff00ff, side: THREE.BackSide, wireframe: true } );
+                        var mesh = new THREE.Mesh( geometry, material );
+                        scene.add( mesh );
 
-                document.addEventListener( 'dragover', function ( event ) {
+                        renderer = new THREE.WebGLRenderer();
+                        renderer.setPixelRatio( window.devicePixelRatio );
+                        renderer.setSize(window.innerWidth, window.innerHeight);
+                        renderer.domElement.style.position = 'absolute';
+                        renderer.domElement.style.top = 0;
+                        container.appendChild(renderer.domElement);
 
-                    event.preventDefault();
-                    event.dataTransfer.dropEffect = 'copy';
+                        window.addEventListener('resize', function() {
 
-                }, false );
+                            camera.aspect = window.innerWidth / window.innerHeight;
+                            camera.updateProjectionMatrix();
+                            renderer.setSize( window.innerWidth, window.innerHeight );
 
-                document.addEventListener( 'dragenter', function ( event ) {
+                        }, false);
 
-                    document.body.style.opacity = 0.5;
+                        animate();
 
-                }, false );
+                  }, false);
 
-                document.addEventListener( 'dragleave', function ( event ) {
-
-                    document.body.style.opacity = 1;
-
-                }, false );
-
-                document.addEventListener( 'drop', function ( event ) {
-
-                    event.preventDefault();
-
-                    var reader = new FileReader();
-                    reader.addEventListener( 'load', function ( event ) {
-
-                        material.map.image.src = event.target.result;
-                        material.map.needsUpdate = true;
-
-                    }, false );
-                    reader.readAsDataURL( event.dataTransfer.files[ 0 ] );
-
-                    document.body.style.opacity = 1;
-
-                }, false );
-
-                //
-
-                window.addEventListener( 'resize', onWindowResize, false );
-
-            }
-
-            function onWindowResize() {
-
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-
-                renderer.setSize( window.innerWidth, window.innerHeight );
-
-            }
-
-            function onDocumentMouseDown( event ) {
-
-                event.preventDefault();
-
-                isUserInteracting = true;
-
-                onPointerDownPointerX = event.clientX;
-                onPointerDownPointerY = event.clientY;
-
-                onPointerDownLon = lon;
-                onPointerDownLat = lat;
-
-            }
-
-            function onDocumentMouseMove( event ) {
-
-                if ( isUserInteracting === true ) {
-
-                    lon = ( onPointerDownPointerX - event.clientX ) * 0.1 + onPointerDownLon;
-                    lat = ( event.clientY - onPointerDownPointerY ) * 0.1 + onPointerDownLat;
-
-                }
-
-            }
-
-            function onDocumentMouseUp( event ) {
-
-                isUserInteracting = false;
-
-            }
-
-            function onDocumentMouseWheel( event ) {
-
-                // WebKit
-
-                if ( event.wheelDeltaY ) {
-
-                    camera.fov -= event.wheelDeltaY * 0.05;
-
-                // Opera / Explorer 9
-
-                } else if ( event.wheelDelta ) {
-
-                    camera.fov -= event.wheelDelta * 0.05;
-
-                // Firefox
-
-                } else if ( event.detail ) {
-
-                    camera.fov += event.detail * 1.0;
-
-                }
-
-                camera.updateProjectionMatrix();
-
-            }
-
-            function animate() {
-
-                requestAnimationFrame( animate );
-                update();
-
-            }
-
-            function update() {
-
-                if ( isUserInteracting === false ) {
-
-                    lon += 0.1;
-
-                }
-
-                lat = Math.max( - 85, Math.min( 85, lat ) );
-                phi = THREE.Math.degToRad( 90 - lat );
-                theta = THREE.Math.degToRad( lon );
-
-                camera.target.x = 500 * Math.sin( phi ) * Math.cos( theta );
-                camera.target.y = 500 * Math.cos( phi );
-                camera.target.z = 500 * Math.sin( phi ) * Math.sin( theta );
-
-                camera.lookAt( camera.target );
-
-                /*
-                // distortion
-                camera.position.copy( camera.target ).negate();
-                */
-
-                renderer.render( scene, camera );
-
-            }
-
+            })();
         </script>
     </body>
 </html>
